@@ -57,3 +57,11 @@ This repository contains the project code, supporting utilities, and dataset con
 - calculate a clearer ATM risk score
 - add real-time video analysis
 - export threat alerts for suspicious events
+
+## How to Run
+
+1. Install dependencies:
+   `pip install -r requirements.txt`
+
+2. Run the main script:
+   `python src/main.py`
