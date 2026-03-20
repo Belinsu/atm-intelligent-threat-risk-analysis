@@ -1,0 +1,7 @@
+model_path: models/weapon/weapon_best.pt
+confidence: 0.4
+iou: 0.5
+
+classes:
+  0: gun
+  1: knife

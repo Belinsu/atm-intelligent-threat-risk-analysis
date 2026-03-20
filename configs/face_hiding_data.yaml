@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 7
+names: ['balaclava', 'concealing glasses', 'hand', 'medicine mask', 'non-concealing glasses', 'nothing', 'scarf']
+
+roboflow:
+  workspace: fvap
+  project: face-hiding-detection-omveq
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/fvap/face-hiding-detection-omveq/dataset/1

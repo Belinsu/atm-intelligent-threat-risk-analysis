@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 1
+names: ['hat']
+
+roboflow:
+  workspace: fvap
+  project: hat-detection-chn7g-t0nk8
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/fvap/hat-detection-chn7g-t0nk8/dataset/1

@@ -1,0 +1,6 @@
+# Face Hiding Detection > 2026-01-15 5:48pm
+https://universe.roboflow.com/fvap/face-hiding-detection-omveq
+
+Provided by a Roboflow user
+License: CC BY 4.0
+
