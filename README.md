@@ -1,67 +1,88 @@
 # ATM Intelligent Threat & Risk Analysis System
 
-This project is a computer vision-based ATM security prototype that combines multiple detection modules to identify suspicious behavior and support risk-oriented surveillance.
+A real-time computer vision prototype that watches an ATM camera feed, detects suspicious visual signals around each person, and turns them into a per-person risk score from 0 to 100%.
 
-## Overview
+## What it does
 
-The system is designed as a conceptual ATM threat analysis solution. It uses multiple visual detection signals, including:
+For every frame from the camera, the system:
 
-- face hiding detection
-- hat detection
-- risk-oriented detection logic
+1. **Detects faces and hands** with a YOLOv8 face-hiding model. If no face is visible at all, it flags possible concealment.
+2. **Classifies face concealment** on each face crop with a second YOLOv8 model: balaclava, medical mask, scarf, hat, hood or cap.
+3. **Detects weapons** (gun, knife) with a separate YOLOv8 detector.
+4. **Stabilizes labels** over the last 7 frames by majority vote, so a single noisy frame does not change the result.
+5. **Scores risk per person** by combining the visual signals with behavioral ones: how long the person has been in view and how many people are around the ATM.
+6. **Draws the result** on the live feed: a box and risk percentage for each person, colored green, yellow or red.
 
-These signals can be combined to flag suspicious activity and support intelligent monitoring in ATM environments.
+## Risk scoring
 
-## Project Goals
+| Signal | Effect on risk |
+| --- | --- |
+| Weapon detected (gun or knife) | Risk set to 100% |
+| Balaclava | At least 70% |
+| Hood or cap combined with a mask or scarf | At least 55% |
+| Medical mask or scarf | +25 |
+| Hat, hood or cap | +25 |
+| Hand detected | +15 |
+| In view for more than 30 seconds | +5 for every further 10 seconds |
+| More than 2 people in view | +10 for each extra person |
 
-- Detect suspicious visual behaviors around ATMs
-- Combine multiple detection outputs into a risk-oriented analysis approach
-- Explore how computer vision can support security systems in financial environments
+The score is capped at 100%. On screen, **50% and above** is shown in yellow and **80% and above** in red.
 
-## Detection Modules
+## Model training
 
-### 1. Face Hiding Detection
-Detects attempts to conceal identity in ATM environments.
+- Custom **YOLOv8n** face-concealment model trained on a dataset of **3,600+ images** curated and labeled with Roboflow.
+- Trained on GPU in Google Colab and Kaggle.
+- Reached **mAP@50 ≈ 0.80**.
+- Validated on real-world videos and images.
 
-### 2. Hat Detection
-Detects headwear as an additional visual signal that may contribute to contextual risk analysis.
+Dataset sources and export notes are in [`configs/`](configs) and [`docs/`](docs).
 
-### 3. Risk Analysis Logic
-Processes detection outputs and evaluates suspicious ATM scenarios using rule-based logic.
+## Tech stack
 
-## Technologies Used
+Python · YOLOv8 (Ultralytics) · OpenCV · Roboflow · Google Colab · Kaggle
 
-- Python
-- YOLOv8
-- Roboflow
-- OpenCV
+## Repository structure
 
-## Repository Structure
+| Path | Contents |
+| --- | --- |
+| [`src/main.py`](src/main.py) | Real-time pipeline: camera input, detection, label stabilization, risk scoring and display |
+| [`src/utils/`](src/utils) | Weapon detector, weapon risk rule, image preprocessing and model download helper |
+| [`src/test_image.py`](src/test_image.py), [`src/test_images_batch.py`](src/test_images_batch.py) | Run the models on single images or a batch of images |
+| [`src/test_video.py`](src/test_video.py), [`src/test_video_risk.py`](src/test_video_risk.py) | Run detection and risk scoring on video files |
+| [`src/scripts/`](src/scripts), [`src/fix_polygons_to_bbox.py`](src/fix_polygons_to_bbox.py) | Dataset preparation: label remapping and polygon-to-box conversion |
+| [`configs/`](configs) | Dataset YAML files for training |
+| [`docs/`](docs) | Dataset and Roboflow export notes |
+| [`datasets/`](datasets) | Note on the omitted dataset files |
 
-- `src/` → project source files, test scripts, and utility modules
-- `configs/` → dataset YAML configuration files
-- `docs/` → dataset export notes and Roboflow-related notes
-- `datasets/` → information about omitted dataset files
+## Running it
 
-## Dataset Note
+Trained weights, images, videos and dataset splits are not included in this repository because of their size.
 
-Images, labels, videos, trained weights, and training splits are not included in this repository because of file size limitations.
+1. Install the dependencies:
 
-## Status
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-This repository contains the project code, supporting utilities, and dataset configuration for an ATM intelligent threat and risk analysis prototype.
+2. Place the trained weights in `src/models/`:
 
-## Future Improvements
+   ```text
+   src/models/face_hiding_best.pt
+   src/models/face_concealment_hat_best.pt
+   src/models/weapon/weapon_best.pt
+   ```
 
-- integrate all detectors into a single inference pipeline
-- calculate a clearer ATM risk score
-- add real-time video analysis
-- export threat alerts for suspicious events
+   The face-concealment model can be downloaded with `python utils/model_loader.py`, run from inside `src/`.
 
-## How to Run
+3. Start the real-time pipeline from inside `src/` (it uses the default webcam; press `Q` to quit):
 
-1. Install dependencies:
-   `pip install -r requirements.txt`
+   ```bash
+   cd src
+   python main.py
+   ```
 
-2. Run the main script:
-   `python src/main.py`
+## Possible next steps
+
+- Track people across frames with a proper tracker instead of box positions
+- Send alerts for high-risk events to a monitoring dashboard
+- Tune the risk weights on labeled incident footage
